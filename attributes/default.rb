@@ -64,6 +64,11 @@ default[:mongodb][:is_configserver] = nil
 
 default[:mongodb][:reload_action] = 'restart' # or "nothing"
 
+
+default[:mongodb][:is_replicaset] = nil
+default[:mongodb][:is_shard] = nil
+default[:mongodb][:is_configserver] = nil
+
 case node['platform_family']
 when 'freebsd'
   default[:mongodb][:package_name] = 'mongo-10gen-server'

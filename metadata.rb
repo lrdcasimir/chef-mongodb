@@ -14,10 +14,11 @@ recipe 'mongodb::replicaset', 'Installs and configures a mongodb replicaset'
 recipe 'mongodb::mms_monitoring_agent', 'Installs and configures a MongoDB MMS Monitoring Agent'
 recipe 'mongodb::mms_backup_agent', 'Installs and configures a MongoDB MMS Backup Agent'
 
-depends 'apt', '>= 1.8.2'
-depends 'yum', '>= 3.0'
-depends 'python'
-depends 'runit', '>= 1.5.0'
+depends "apt", ">= 1.8.2"
+depends "python", ">= 1.3.0"
+depends "runit", ">= 1.1.6"
+depends "yum"
+depends "poise"
 
 %w(ubuntu debian centos redhat amazon).each do |os|
   supports os

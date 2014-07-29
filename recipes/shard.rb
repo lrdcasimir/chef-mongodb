@@ -19,22 +19,15 @@
 # limitations under the License.
 #
 
-node.set['mongodb']['is_shard'] = true
-node.set['mongodb']['shard_name'] = node['mongodb']['shard_name']
-node.set['mongodb']['is_replicaset'] = node['mongodb']['is_replicaset']
-node.set['mongodb']['cluster_name'] = node['mongodb']['cluster_name']
+node.set[:mongodb][:is_shard] = true
 
-include_recipe 'mongodb::install'
+include_recipe "mongodb::install"
 
 # we are not starting the shard service with the --shardsvr
 # commandline option because right now this only changes the port it's
 # running on, and we are overwriting this port anyway.
-mongodb_instance node['mongodb']['instance_name'] do
-  mongodb_type 'shard'
-  port         node['mongodb']['config']['port']
-  logpath      node['mongodb']['config']['logpath']
-  dbpath       node['mongodb']['config']['dbpath']
-  replicaset   node if node['mongodb']['is_replicaset']
-  enable_rest  node['mongodb']['config']['rest']
-  smallfiles   node['mongodb']['config']['smallfiles']
+mongodb_shard_instance "shard" do
+  if node['mongodb']['is_replicated']
+    replicaset    node
+  end
 end
