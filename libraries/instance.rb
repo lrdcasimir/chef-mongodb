@@ -15,6 +15,7 @@ class Chef
     attribute(:cluster_name, kind_of: String, default: lazy { node['mongodb']['cluster_name'] })
     attribute(:dbconfig_file, kind_of: String, default: lazy { node['mongodb']['dbconfig_file'] })
     attribute(:dbconfig_file_template, kind_of: String, default: lazy { node['mongodb']['dbconfig_file_template'] })
+    attribute(:dbconfig_vars, kind_of: Hash, default: lazy {node['mongodb']['config'] })
     attribute(:init_dir, kind_of: String, default: lazy { node['mongodb']['init_dir'] })
     attribute(:init_script_template, kind_of: String, default: lazy { node['mongodb']['init_script_template'] })
     attribute(:mongodb_user, kind_of: String, default: lazy { node['mongodb']['user'] })
@@ -25,6 +26,8 @@ class Chef
     attribute(:sysconfig_file_template, kind_of: String, default: lazy { node['mongodb']['sysconfig_file_template'] })
     attribute(:sysconfig_vars, kind_of: Hash, default: lazy { node['mongodb']['sysconfig'] })
     attribute(:template_cookbook, kind_of: String, default: lazy { node['mongodb']['template_cookbook'] })
+    attribute(:ulimit, kind_of: Hash, default: lazy { node['mongodb']['ulimit'] })
+
 
     def init_file
       if node['mongodb']['apt_repo'] == "ubuntu-upstart" then
@@ -84,6 +87,7 @@ class Chef
   end
   class Provider::MongodbInstance < Provider
     include Poise::Provider
+    include Chef::DSL::Recipe
     def action_enable
       converge_by("enable mongodb instance #{new_resource.name}") do
         notifying_block do
@@ -157,6 +161,10 @@ class Chef
         group new_resource.root_group
         owner "root"
         mode "0644"
+        variables(
+          "config" => new_resource.dbconfig_vars
+        )
+        helpers MongoDBConfigHelpers
       end
 
       # init script
@@ -167,8 +175,12 @@ class Chef
         owner "root"
         mode "0755"
         variables(
-          provides: new_resource.provides
+          provides: new_resource.provides,
+          ulimit: new_resource.ulimit,
+          sysconfig_file: new_resource.sysconfig_file,
+          name: new_resource.name
         )
+
         # notifies :restart, "service[#{new_resource.name}]"
       end
 
@@ -218,6 +230,7 @@ class Chef
 
     def enable_service
       service new_resource.name do
+        provider Chef::Provider::Service::Upstart
         supports :status => true, :restart => true
         action :enable
         new_resource.service_notifies.each do |service_notify|
